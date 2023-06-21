@@ -1,4 +1,9 @@
-name: Build and deploy
+name: Build and Deploy
+
+env:
+  PKG_NAME: shadowsocks-rust
+  PKG_VERSION: 1.15.3
+  PKG_RELEASE: "1"
 
 on:
   push:
@@ -6,50 +11,72 @@ on:
       - main
 
 jobs:
-  download-source-code:
+  prepaire-source-code:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Download the source code
+      - run: cat /etc/os-release
+
+      - name: Download source code archive
+        env:
+          tarball_url:  https://github.com/shadowsocks/${PKG_NAME}/archive/refs/tags/v${PKG_VERSION}.tar.gz
+          tarball_path: ${PKG_NAME}-${PKG_VERSION}.tar.gz
+          src_dir:      ${PKG_NAME}-${PKG_VERSION}
         run: |
-            wget --no-verbose -O source.tar.gz https://example.com/source.tar.gz
-            tar -xf source.tar.gz
+          wget --no-verbose -O "$tarball_path" "$tarball_url" &&
+          tar -xf "$tarball_path" &&
+          test -d "$src_dir"
+
+      - name: Patching
+        run: patch -i src/Cargo.toml.patch
 
   build-ubuntu:
     runs-on: ubuntu-20.04
-    needs: download-source-code
+    needs: prepaire-source-code
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
+      - name: Install cargo-deb tool
+        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
 
-      - name: Build the project on Ubuntu
-        run: cd source && ./build.sh ubuntu /out/path1
+      - name: Print version info for debugging
+        run: |
+          cat /etc/os-release &&
+          gcc --version &&
+          rustup --version &&
+          rustup default &&
+          rustc --version &&
+          cargo --version
+
+      - name: Build the project on Debian
+        run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
+
+      - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
 
   build-debian:
     runs-on: debian-12
-    needs: download-source-code
+    needs: prepaire-source-code
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
+      - name: Install cargo-deb tool
+        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+
+      - name: Print version info for debugging
+        run: |
+          cat /etc/os-release &&
+          gcc --version &&
+          rustup --version &&
+          rustup default &&
+          rustc --version &&
+          cargo --version
 
       - name: Build the project on Debian
-        run: cd source && ./build.sh debian /out/path2
+        run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
 
-  build-alpine:
-    runs-on: alpine
-    needs: download-source-code
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
-
-      - name: Build the project on Alpine
-        run: cd source && ./build.sh alpine /out/path3
+      - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
 
   publish-pages:
     runs-on: ubuntu-latest
-    needs: [build-ubuntu, build-debian, build-alpine]
+    needs: [build-ubuntu, build-debian]
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2

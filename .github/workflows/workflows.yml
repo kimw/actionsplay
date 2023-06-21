@@ -1,0 +1,67 @@
+name: Build and deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  download-source-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Download the source code
+        run: |
+            wget --no-verbose -O source.tar.gz https://example.com/source.tar.gz
+            tar -xf source.tar.gz
+
+  build-ubuntu:
+    runs-on: ubuntu-20.04
+    needs: download-source-code
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Build the project on Ubuntu
+        run: cd source && ./build.sh ubuntu /out/path1
+
+  build-debian:
+    runs-on: debian-12
+    needs: download-source-code
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Build the project on Debian
+        run: cd source && ./build.sh debian /out/path2
+
+  build-alpine:
+    runs-on: alpine
+    needs: download-source-code
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Build the project on Alpine
+        run: cd source && ./build.sh alpine /out/path3
+
+  publish-pages:
+    runs-on: ubuntu-latest
+    needs: [build-ubuntu, build-debian, build-alpine]
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Copy the output
+        run: |
+          mkdir -p public/ubuntu
+          cp -r /out/path1 public/ubuntu
+          mkdir -p public/debian
+          cp -r /out/path2 public/debian
+          mkdir -p public/alpine
+          cp -r /out/path3 public/alpine
+
+      - name: Publish the pages
+        run: hugo -d public

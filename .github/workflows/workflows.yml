@@ -19,9 +19,13 @@ jobs:
 
       - run: cat /etc/os-release
 
-      - run: echo \$X=$X
-      - run: X=123
-      - run: echo \$X=$X
+      - run: |
+          echo \$X=$X
+          X=123
+          echo \$X=$X
+      - run: echo \$Y=$Y
+      - run: export Y=123
+      - run: echo \$Y=$Y
 
       - name: Download source code archive
         env:

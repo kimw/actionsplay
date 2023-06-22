@@ -1,0 +1,45 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -2,7 +2,7 @@
+ name = "shadowsocks-rust"
+ version = "1.15.3"
+ authors = ["Shadowsocks Contributors"]
+-description = "shadowsocks is a fast tunnel proxy that helps you bypass firewalls."
++description = "Rust port of shadowsocks, a secure socks5 proxy"
+ repository = "https://github.com/shadowsocks/shadowsocks-rust"
+ readme = "README.md"
+ documentation = "https://docs.rs/shadowsocks-rust"
+@@ -177,3 +177,33 @@ byteorder = "1.3"
+ env_logger = "0.10"
+ byte_string = "1.0"
+ tokio = { version = "1", features = ["net", "time", "macros", "io-util"] }
++
++[package.metadata.deb]
++maintainer = "Kim Wong <deb@kimwong.me>"
++copyright = "2017-2023, Y. T. CHUNG <zonyitoo@gmail.com>"
++license-file = ["LICENSE", "4"]
++changelog = "debian/changelog"
++depends = "$auto, apg | pwgen, lsb-base, libcap2-bin [linux-any]"
++suggests = "haveged, v2ray-plugin"
++conflicts = "shadowsocks"
++extended-description = "Shadowsocks is a fast tunnel proxy that helps you bypass firewalls. Shadowsocks-rust was inspired by Shadowsocks (in Python). It's rewritten in rust."
++section = "net"
++priority = "optional"
++maintainer-scripts = "debian/"
++conf-files = ["/etc/default/shadowsocks-rust", "/etc/init.d/shadowsocks-rust"]
++systemd-units = { }
++assets = [
++    ["debian/shadowsocks-rust-local@.service", "/lib/systemd/system/shadowsocks-rust-local@.service", "644"],
++    ["debian/shadowsocks-rust-server@.service", "/lib/systemd/system/shadowsocks-rust-server@.service", "644"],
++
++    ["debian/shadowsocks-rust.default", "/etc/default/shadowsocks-rust", "644"],
++    ["debian/shadowsocks-rust.init", "/etc/init.d/shadowsocks-rust", "644"],
++
++    ["debian/config.json", "/usr/share/shadowsocks-rust/config.json", "644"],
++
++    ["target/release/sslocal", "/usr/bin/sslocal", "755"],
++    ["target/release/ssmanager", "/usr/bin/ssmanager", "755"],
++    ["target/release/ssserver", "/usr/bin/ssserver", "755"],
++    ["target/release/ssservice", "/usr/bin/ssservice", "755"],
++    ["target/release/ssurl", "/usr/bin/ssurl", "755"],
++]

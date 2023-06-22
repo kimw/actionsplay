@@ -30,7 +30,7 @@ jobs:
           mv -v "${PKG_NAME}-${PKG_VERSION}" "${PKG_NAME}"
 
       - run: pwd
-      - run: ls -lAFR
+      - run: ls -lAF
 
       - name: Patching
         run: patch -p1 -i src/Cargo.toml.patch
@@ -51,7 +51,7 @@ jobs:
           rustc --version &&
           cargo --version
 
-      - run: pwd
+      - run: pwd ; ls -lAF
       - run: cd "${PKG_NAME}"
       - run: pwd
 

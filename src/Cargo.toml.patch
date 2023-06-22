@@ -1,5 +1,5 @@
---- a/Cargo.toml
-+++ b/Cargo.toml
+--- a/shadowsocks-rust/Cargo.toml
++++ b/shadowsocks-rust/Cargo.toml
 @@ -2,7 +2,7 @@
  name = "shadowsocks-rust"
  version = "1.15.3"

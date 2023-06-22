@@ -33,7 +33,7 @@ jobs:
       - run: ls -lAFR
 
       - name: Patching
-        run: patch -p1 -i src/Cargo.toml.patch
+        run: patch -i src/Cargo.toml.patch
 
   build-ubuntu:
     runs-on: ubuntu-20.04
@@ -50,6 +50,10 @@ jobs:
           rustup default &&
           rustc --version &&
           cargo --version
+
+      - run: pwd
+      - run: cd "${PKG_NAME}"
+      - run: pwd
 
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"

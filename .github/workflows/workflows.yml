@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: prepaired-source-code
-          path: ./${PKG_NAME}
+          path: shadowsocks-rust
 
   build-ubuntu:
     runs-on: ubuntu-20.04

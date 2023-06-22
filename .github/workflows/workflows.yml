@@ -28,7 +28,7 @@ jobs:
           wget --no-verbose -O "$tarball_path" "$tarball_url" &&
           tar -xf "$tarball_path" &&
           test -d "$src_dir" &&
-          mv "$src_dir" "$${PKG_NAME}"
+          mv -v "$src_dir" "${PKG_NAME}"
 
       - run: pwd
       - run: ls -lAFR

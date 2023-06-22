@@ -19,20 +19,12 @@ jobs:
 
       - run: cat /etc/os-release
 
-      - run: |
-          echo \$X=$X
-          X=123
-          echo \$X=$X
-      - run: echo \$Y=$Y
-      - run: export Y=123
-      - run: echo \$Y=$Y
-
       - name: Download source code archive
-        env:
-          tarball_url:  https://github.com/shadowsocks/${PKG_NAME}/archive/refs/tags/v${PKG_VERSION}.tar.gz
-          tarball_path: ${PKG_NAME}-${PKG_VERSION}.tar.gz
-          src_dir:      ${PKG_NAME}-${PKG_VERSION}
         run: |
+          tarball_url="https://github.com/shadowsocks/${PKG_NAME}/archive/refs/tags/v${PKG_VERSION}.tar.gz"
+          tarball_path="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+          src_dir="${PKG_NAME}-${PKG_VERSION}"
+
           wget --no-verbose -O "$tarball_path" "$tarball_url" &&
           tar -xf "$tarball_path" &&
           test -d "$src_dir"

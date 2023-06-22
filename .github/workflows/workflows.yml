@@ -40,6 +40,7 @@ jobs:
         with:
           name: prepaired-source-code
           path: shadowsocks-rust
+          if-no-files-found: error
 
   build-ubuntu:
     runs-on: ubuntu-20.04
@@ -63,8 +64,6 @@ jobs:
           name: prepaired-source-code
   
       - run: pwd ; ls -lAF
-      - run: cd "${PKG_NAME}"
-      - run: pwd
 
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
@@ -93,8 +92,6 @@ jobs:
           name: prepaired-source-code
     
       - run: pwd ; ls -lAF
-      - run: cd "${PKG_NAME}"
-      - run: pwd
 
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"

@@ -51,6 +51,9 @@ jobs:
           rustc --version &&
           cargo --version
 
+      - name: Checkout repository
+        uses: actions/checkout@v2
+  
       - run: pwd ; ls -lAF
       - run: cd "${PKG_NAME}"
       - run: pwd
@@ -75,6 +78,13 @@ jobs:
           rustup default &&
           rustc --version &&
           cargo --version
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+  
+      - run: pwd ; ls -lAF
+      - run: cd "${PKG_NAME}"
+      - run: pwd
 
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"

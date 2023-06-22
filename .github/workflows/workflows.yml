@@ -33,7 +33,7 @@ jobs:
       - run: ls -lAFR
 
       - name: Patching
-        run: patch "${PKG_NAME}"/Cargo.toml src/Cargo.toml.patch
+        run: patch -p1 -i src/Cargo.toml.patch
 
   build-ubuntu:
     runs-on: ubuntu-20.04

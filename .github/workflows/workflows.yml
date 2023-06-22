@@ -35,6 +35,12 @@ jobs:
       - name: Patching
         run: patch -p1 -i src/Cargo.toml.patch
 
+      - name: Archive prepaired source code
+        uses: actions/upload-artifact@v2
+        with:
+          name: prepaired-source-code
+          path: ${PKG_NAME}
+
   build-ubuntu:
     runs-on: ubuntu-20.04
     needs: prepaire-source-code
@@ -51,8 +57,10 @@ jobs:
           rustc --version &&
           cargo --version
 
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Download prepaired source code
+        uses: actions/download-artifact@v2
+        with:
+          name: prepaired-source-code
   
       - run: pwd ; ls -lAF
       - run: cd "${PKG_NAME}"
@@ -79,9 +87,11 @@ jobs:
           rustc --version &&
           cargo --version
 
-      - name: Checkout repository
-        uses: actions/checkout@v2
-  
+      - name: Download prepaired source code
+        uses: actions/download-artifact@v2
+        with:
+          name: prepaired-source-code
+    
       - run: pwd ; ls -lAF
       - run: cd "${PKG_NAME}"
       - run: pwd

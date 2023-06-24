@@ -68,7 +68,7 @@ jobs:
           curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
           chmod 755 /usr/local/bin/cargo-deb
   
-      - name: Build the project on Debian
+      - name: Build on i686 arch with GNU C library
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
 
       # - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
@@ -127,7 +127,7 @@ jobs:
 
       - run: rustup target add i686-unknown-linux-gnu
 
-      - name: Build the project on Debian
+      - name: Build on i686 arch with GNU C library
         run: cargo build --target=i686-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
 
       # - run: cargo test --workspace --target=i686-unknown-linux-gnu --release
@@ -138,13 +138,13 @@ jobs:
       - name: TODO
         run: |
           pwd
-          ls -lAF ./target/x86_64-unknown-linux-gnu/release/
-          install -Dv -t ./dist/x86_64-gnu/ \
-               ./target/x86_64-unknown-linux-gnu/release/sslocal \
-               ./target/x86_64-unknown-linux-gnu/release/ssmanager \
-               ./target/x86_64-unknown-linux-gnu/release/ssserver \
-               ./target/x86_64-unknown-linux-gnu/release/ssservice \
-               ./target/x86_64-unknown-linux-gnu/release/ssurl
+          ls -lAF ./target/i686-unknown-linux-gnu/release/
+          install -Dv -t ./dist/i686-gnu/ \
+               ./target/i686-unknown-linux-gnu/release/sslocal \
+               ./target/i686-unknown-linux-gnu/release/ssmanager \
+               ./target/i686-unknown-linux-gnu/release/ssserver \
+               ./target/i686-unknown-linux-gnu/release/ssservice \
+               ./target/i686-unknown-linux-gnu/release/ssurl
 
       - run: ls -lAFR ./dist/
 

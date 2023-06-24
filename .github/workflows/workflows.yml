@@ -166,6 +166,7 @@ jobs:
 
       - run: mkdir -p public
       - run: cp -v pubkey.asc pubkey.gpg public/
+      - run: ls -lAF
       - name: add .deb files into Debian repository
         run: |-
           reprepro -b debian -C contrib includedeb buster   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb

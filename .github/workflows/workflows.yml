@@ -15,20 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: cat /etc/os-release
-
-      - name: Import the sign key
-        env:
-          PRIVATE_SIGKEY: ${{ secrets.PRIVATE_SIGKEY }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gpg
-          test -n "$PRIVATE_SIGKEY"  # ensure $PRIVATE_SIGKEY is not empty
-          echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import
-          gpg -K
-
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Download source code archive
         run: |-
           tarball_url="https://github.com/shadowsocks/${PKG_NAME}/archive/refs/tags/v${PKG_VERSION}.tar.gz"
@@ -38,15 +26,12 @@ jobs:
           tar -xf "v${PKG_VERSION}.tar.gz" &&
           test -d "${PKG_NAME}-${PKG_VERSION}" &&
           mv -v "${PKG_NAME}-${PKG_VERSION}" "${PKG_NAME}"
-
       - name: Patching
         run: |-
           for fname in src/*.patch; do
             patch -p1 -i "$fname"
           done
-
       - run: pwd ; ls -lAF
-
       - name: Archive prepaired source code
         uses: actions/upload-artifact@v3
         with:
@@ -66,26 +51,20 @@ jobs:
           rustup default &&
           rustc --version &&
           cargo --version
-
       - name: Download prepaired source code
         uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
       - run: pwd ; ls -lAF
-  
       - name: Install cargo-deb tool
         run: |
           curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
           chmod 755 /usr/local/bin/cargo-deb
-  
       - name: Build on i686 arch with GNU C library
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
-
       # - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
-
       - name: Package output as .deb
         run: cargo deb --target=x86_64-unknown-linux-gnu --deb-version="${PKG_VERSION}-${PKG_RELEASE}-xdeb" --output=./dist/
-
       - name: TODO
         run: |
           pwd
@@ -96,9 +75,7 @@ jobs:
                ./target/x86_64-unknown-linux-gnu/release/ssserver \
                ./target/x86_64-unknown-linux-gnu/release/ssservice \
                ./target/x86_64-unknown-linux-gnu/release/ssurl
-
       - run: ls -lAFR ./dist/
-
       - name: Archive output
         uses: actions/upload-artifact@v3
         with:
@@ -118,33 +95,25 @@ jobs:
           rustup default &&
           rustc --version &&
           cargo --version
-
       - name: Download prepaired source code
         uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
       - run: pwd ; ls -lAF
-  
       - name: Install cargo-deb tool
         run: |
           curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
           chmod 755 /usr/local/bin/cargo-deb
-
       - name: Install cross compiling dependency
         run: |
           sudo apt-get update
           sudo apt-get install --yes gcc-multilib
-
       - run: rustup target add i686-unknown-linux-gnu
-
       - name: Build on i686 arch with GNU C library
         run: cargo build --target=i686-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
-
       # - run: cargo test --workspace --target=i686-unknown-linux-gnu --release
-
       - name: Package output as .deb
         run: cargo deb --target=i686-unknown-linux-gnu --deb-version="${PKG_VERSION}-${PKG_RELEASE}-xdeb" --output=./dist/
-
       - name: TODO
         run: |
           pwd
@@ -155,9 +124,7 @@ jobs:
                ./target/i686-unknown-linux-gnu/release/ssserver \
                ./target/i686-unknown-linux-gnu/release/ssservice \
                ./target/i686-unknown-linux-gnu/release/ssurl
-
       - run: ls -lAFR ./dist/
-
       - name: Archive output
         uses: actions/upload-artifact@v3
         with:
@@ -173,13 +140,13 @@ jobs:
     steps:
       - name: Download building outputs
         uses: actions/download-artifact@v3
-      #   with:
-      #     name: output-x86_64-gnu
-      # - run: pwd ; ls -lAF
-      # - name: Download building outputs
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: output-i686-gnu
+        with:
+          name: output-x86_64-gnu
+      - run: pwd ; ls -lAF
+      - name: Download building outputs
+        uses: actions/download-artifact@v3
+        with:
+          name: output-i686-gnu
       - run: pwd ; ls -lAF
 
       - run: |
@@ -194,22 +161,24 @@ jobs:
           echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import
           gpg -K
 
-      - run: |-
-          # add .deb files into Debian repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - run: mkdir -p public
+      - run: cp -v pubkey.asc pubkey.gpg public/
+      - name: add .deb files into Debian repository
+        run: |-
           reprepro -b debian -C contrib includedeb buster   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
           reprepro -b debian -C contrib includedeb bullseye ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
           reprepro -b debian -C contrib includedeb bookworm ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-
-          # add .deb files into Ubuntu repository
+          cp -v -r debian public/
+      - name: add .deb files into Ubuntu repository
+        run: |
           reprepro -b ubuntu -C universe includedeb focal   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
           reprepro -b ubuntu -C universe includedeb jammy   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
           reprepro -b ubuntu -C universe includedeb kinetic ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
           reprepro -b ubuntu -C universe includedeb lunar   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-
-      - run: mkdir -p public
-      - run: cp -v pubkey.asc pubkey.gpg public/
-      - run: cp -v -r debian public/
-      - run: cp -v -r ubuntu public/
+          cp -v -r ubuntu public/
       - name: Make `index.html`
         run: tree public -H '.' -T "$title" -I "reveal*|img*|style*|index*|content*|data" --noreport --charset utf-8 > public/index.html
 

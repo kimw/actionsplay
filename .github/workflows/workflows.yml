@@ -118,7 +118,9 @@ jobs:
           chmod 755 /usr/local/bin/cargo-deb
 
       - name: Install cross compiling dependency
-        run: apt-get install --yes gcc-multilib
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes gcc-multilib
 
       - run: rustup target add i686-unknown-linux-gnu
 

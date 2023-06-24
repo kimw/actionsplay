@@ -17,6 +17,8 @@ jobs:
       - run: cat /etc/os-release
 
       - name: Import the sign key
+        env:
+          PRIVATE_SIGKEY: ${{ secrets.PRIVATE_SIGKEY }}
         run: |
           sudo apt-get update
           sudo apt-get install -y gpg
@@ -185,6 +187,8 @@ jobs:
           sudo apt-get install -y gpg reprepro tree
 
       - name: Import the sign key
+        env:
+          PRIVATE_SIGKEY: ${{ secrets.PRIVATE_SIGKEY }}
         run: |
           test -n "$PRIVATE_SIGKEY"  # ensure $PRIVATE_SIGKEY is not empty
           echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import

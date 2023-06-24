@@ -14,26 +14,28 @@ jobs:
   prepaire-source-code:
     runs-on: ubuntu-latest
     steps:
+      - run: cat /etc/os-release
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - run: cat /etc/os-release
-
       - name: Download source code archive
-        run: |
+        run: |-
           tarball_url="https://github.com/shadowsocks/${PKG_NAME}/archive/refs/tags/v${PKG_VERSION}.tar.gz"
           tarball_path="${PKG_NAME}-${PKG_VERSION}.tar.gz"
 
-          wget --no-verbose -O "$tarball_path" "$tarball_url" &&
-          tar -xf "$tarball_path" &&
+          wget --no-verbose "$tarball_url" &&
+          tar -xf "v${PKG_VERSION}.tar.gz" &&
           test -d "${PKG_NAME}-${PKG_VERSION}" &&
           mv -v "${PKG_NAME}-${PKG_VERSION}" "${PKG_NAME}"
 
-      - run: pwd
-      - run: ls -lAF
-
       - name: Patching
-        run: patch -p1 -i src/Cargo.toml.patch
+        run: |-
+          for fname in src/*.patch
+            do patch -p1 -i src/Cargo.toml.patch
+          done
+
+      - run: pwd ; ls -lAF
 
       - name: Archive prepaired source code
         uses: actions/upload-artifact@v2
@@ -42,13 +44,10 @@ jobs:
           path: shadowsocks-rust
           if-no-files-found: error
 
-  build-ubuntu:
+  build-focal:
     runs-on: ubuntu-20.04
     needs: prepaire-source-code
     steps:
-      - name: Install cargo-deb tool
-        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
-
       - name: Print version info for debugging
         run: |
           cat /etc/os-release &&
@@ -62,21 +61,20 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: prepaired-source-code
-  
       - run: pwd ; ls -lAF
-
+  
+      - name: Install cargo-deb tool
+        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+  
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
 
       - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
 
-  build-debian:
-    runs-on: debian-12
+  build-jammy:
+    runs-on: ubuntu-22.04
     needs: prepaire-source-code
     steps:
-      - name: Install cargo-deb tool
-        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
-
       - name: Print version info for debugging
         run: |
           cat /etc/os-release &&
@@ -90,9 +88,65 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: prepaired-source-code
-    
       - run: pwd ; ls -lAF
+  
+      - name: Install cargo-deb tool
+        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+  
+      - name: Build the project on Debian
+        run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
 
+      - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
+
+  build-kinetic:
+    runs-on: ubuntu-22.10
+    needs: prepaire-source-code
+    steps:
+      - name: Print version info for debugging
+        run: |
+          cat /etc/os-release &&
+          gcc --version &&
+          rustup --version &&
+          rustup default &&
+          rustc --version &&
+          cargo --version
+
+      - name: Download prepaired source code
+        uses: actions/download-artifact@v2
+        with:
+          name: prepaired-source-code
+      - run: pwd ; ls -lAF
+  
+      - name: Install cargo-deb tool
+        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+  
+      - name: Build the project on Debian
+        run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
+
+      - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
+
+  build-lunar2:
+    runs-on: ubuntu-23.04
+    needs: prepaire-source-code
+    steps:
+      - name: Print version info for debugging
+        run: |
+          cat /etc/os-release &&
+          gcc --version &&
+          rustup --version &&
+          rustup default &&
+          rustc --version &&
+          cargo --version
+
+      - name: Download prepaired source code
+        uses: actions/download-artifact@v2
+        with:
+          name: prepaired-source-code
+      - run: pwd ; ls -lAF
+  
+      - name: Install cargo-deb tool
+        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+  
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
 
@@ -100,7 +154,11 @@ jobs:
 
   publish-pages:
     runs-on: ubuntu-latest
-    needs: [build-ubuntu, build-debian]
+    needs:
+      - build-focal
+      - build-jammy
+      - build-kinetic
+      - build-lunar2
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2

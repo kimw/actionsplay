@@ -1,0 +1,23 @@
+Codename: focal
+Suite: focal
+Architectures: amd64 arm64 armhf i386
+Components: universe
+SignWith: 6C4D6E5086FDCD4F
+
+Codename: jammy
+Suite: jammy
+Architectures: amd64 arm64 armhf i386
+Components: universe
+SignWith: 6C4D6E5086FDCD4F
+
+Codename: kinetic
+Suite: kinetic
+Architectures: amd64 arm64 armhf i386
+Components: universe
+SignWith: 6C4D6E5086FDCD4F
+
+Codename: lunar
+Suite: lunar
+Architectures: amd64 arm64 armhf i386
+Components: universe
+SignWith: 6C4D6E5086FDCD4F

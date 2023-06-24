@@ -1,0 +1,17 @@
+Codename: buster
+Suite: stable
+Architectures: amd64 arm64 armhf i386
+Components: contrib
+SignWith: 6C4D6E5086FDCD4F
+
+Codename: bullseye
+Suite: stable
+Architectures: amd64 arm64 armhf i386
+Components: contrib
+SignWith: 6C4D6E5086FDCD4F
+
+Codename: bookworm
+Suite: stable
+Architectures: amd64 arm64 armhf i386
+Components: contrib
+SignWith: 6C4D6E5086FDCD4F

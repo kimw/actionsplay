@@ -16,6 +16,14 @@ jobs:
     steps:
       - run: cat /etc/os-release
 
+      - name: Import the sign key
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gpg
+          test -n "$PRIVATE_SIGKEY"  # ensure $PRIVATE_SIGKEY is not empty
+          echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import
+          gpg -K
+
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -163,25 +171,43 @@ jobs:
     steps:
       - name: Download building outputs
         uses: actions/download-artifact@v3
-        with:
-          name: output-x86_64-gnu
-      - run: pwd ; ls -lAF
-      - name: Download building outputs
-        uses: actions/download-artifact@v3
-        with:
-          name: output-i686-gnu
+      #   with:
+      #     name: output-x86_64-gnu
+      # - run: pwd ; ls -lAF
+      # - name: Download building outputs
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: output-i686-gnu
       - run: pwd ; ls -lAF
 
-      - name: Copy the output
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y gpg reprepro tree
+
+      - name: Import the sign key
         run: |
-          pwd
-          ls -lAF
-          mkdir -p public/ubuntu
-          cp -r /out/path1 public/ubuntu
-          mkdir -p public/debian
-          cp -r /out/path2 public/debian
-          mkdir -p public/alpine
-          cp -r /out/path3 public/alpine
+          test -n "$PRIVATE_SIGKEY"  # ensure $PRIVATE_SIGKEY is not empty
+          echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import
+          gpg -K
+
+      - run: |-
+          # add .deb files into Debian repository
+          reprepro -b debian -C contrib includedeb buster   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b debian -C contrib includedeb bullseye ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b debian -C contrib includedeb bookworm ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+
+          # add .deb files into Ubuntu repository
+          reprepro -b ubuntu -C universe includedeb focal   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb jammy   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb kinetic ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb lunar   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+
+      - run: mkdir -p public
+      - run: cp -v pubkey.asc pubkey.gpg public/
+      - run: cp -v -r debian public/
+      - run: cp -v -r ubuntu public/
+      - name: Make `index.html`
+        run: tree public -H '.' -T "$title" -I "reveal*|img*|style*|index*|content*|data" --noreport --charset utf-8 > public/index.html
 
       - name: Publish the pages
         run: hugo -d public

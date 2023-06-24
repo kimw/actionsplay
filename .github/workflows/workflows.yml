@@ -138,6 +138,9 @@ jobs:
       - build-x86_64-gnu
       - build-i686-gnu
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Download building outputs
         uses: actions/download-artifact@v3
         with:
@@ -160,10 +163,6 @@ jobs:
           test -n "$PRIVATE_SIGKEY"  # ensure $PRIVATE_SIGKEY is not empty
           echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import
           gpg -K
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - run: mkdir -p public
       - run: cp -v pubkey.asc pubkey.gpg public/
       - run: ls -lAF

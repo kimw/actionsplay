@@ -17,7 +17,7 @@ jobs:
       - run: cat /etc/os-release
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download source code archive
         run: |-
@@ -38,7 +38,7 @@ jobs:
       - run: pwd ; ls -lAF
 
       - name: Archive prepaired source code
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: prepaired-source-code
           path: shadowsocks-rust
@@ -58,7 +58,7 @@ jobs:
           cargo --version
 
       - name: Download prepaired source code
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
       - run: pwd ; ls -lAF
@@ -89,8 +89,8 @@ jobs:
 
       - run: ls -lAFR ./dist/
 
-      - name: Archive prepaired source code
-        uses: actions/upload-artifact@v2
+      - name: Archive output
+        uses: actions/upload-artifact@v3
         with:
           name: output-x86_64-gnu
           path: dist
@@ -110,7 +110,7 @@ jobs:
           cargo --version
 
       - name: Download prepaired source code
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
       - run: pwd ; ls -lAF
@@ -148,8 +148,8 @@ jobs:
 
       - run: ls -lAFR ./dist/
 
-      - name: Archive prepaired source code
-        uses: actions/upload-artifact@v2
+      - name: Archive output
+        uses: actions/upload-artifact@v3
         with:
           name: output-i686-gnu
           path: dist
@@ -161,8 +161,16 @@ jobs:
       - build-x86_64-gnu
       - build-i686-gnu
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
+      - name: Download building outputs
+        uses: actions/download-artifact@v3
+        with:
+          name: output-x86_64-gnu
+      - run: pwd ; ls -lAF
+      - name: Download building outputs
+        uses: actions/download-artifact@v3
+        with:
+          name: output-i686-gnu
+      - run: pwd ; ls -lAF
 
       - name: Copy the output
         run: |

@@ -64,7 +64,9 @@ jobs:
       - run: pwd ; ls -lAF
   
       - name: Install cargo-deb tool
-        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+        run: |
+          curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+          chmod 755 /usr/local/bin/cargo-deb
   
       - name: Build the project on Debian
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
@@ -111,8 +113,13 @@ jobs:
       - run: pwd ; ls -lAF
   
       - name: Install cargo-deb tool
-        run: curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
-  
+        run: |
+          curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
+          chmod 755 /usr/local/bin/cargo-deb
+
+      - name: Install cross compiling dependency
+        run: apt-get install --yes gcc-multilib
+
       - run: rustup target add i686-unknown-linux-gnu
 
       - name: Build the project on Debian

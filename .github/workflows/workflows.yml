@@ -157,23 +157,20 @@ jobs:
         run: |-
           wget --no-verbose "https://github.com/shadowsocks/v2ray-plugin/archive/refs/tags/v${V2RAY_PLUGIN_VERSION}.tar.gz"
           tar -xf "v${V2RAY_PLUGIN_VERSION}.tar.gz"
-          cd "v2ray-plugin-${V2RAY_PLUGIN_VERSION}"
       - name: Test
         run: |-
-          pwd
-
+          cd "v2ray-plugin-${V2RAY_PLUGIN_VERSION}"
           go fmt $(go list ./... | grep -v /vendor/) || echo "******** TEST FAILED ********"
           go vet $(go list ./... | grep -v /vendor/) || echo "******** TEST FAILED ********"
           go test -race $(go list ./... | grep -v /vendor/) || echo "******** TEST FAILED ********"
       - name: Build
         run: |-
-          pwd
-
           ldflags="-s -w"
           ldflags="$ldflags -X 'main.VERSION=v${PKG_VERSION} with v2ray/core $(grep v2ray-core go.mod | sed 's/^.*\s\(.*\)$/\1/'), built @ $(date -u +%FT%TZ)'"
           ldflags="$ldflags -X v2ray.com/core.codename=V2Fly"
           ldflags="$ldflags -X v2ray.com/core.build=$(date -u +%FT%TZ)"
 
+          cd "v2ray-plugin-${V2RAY_PLUGIN_VERSION}"
           GOARCH=amd64 go build -o "../dist/amd64/v2ray-plugin" -ldflags="$ldflags" -trimpath
           GOARCH=386   go build -o "../dist/386/v2ray-plugin"   -ldflags="$ldflags" -trimpath
       - name: Archive output

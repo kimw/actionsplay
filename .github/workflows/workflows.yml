@@ -1,9 +1,11 @@
 name: Build and Deploy
 
 env:
-  PKG_NAME: shadowsocks-rust
-  PKG_VERSION: 1.15.3
-  PKG_RELEASE: "1"
+  SHADOWSOCKS_RUST_VERSION: 1.15.3
+  SHADOWSOCKS_RUST_RELEASE: "1"
+  V2RAY_PLUGIN_VERSION: 1.3.1
+  V2RAY_PLUGIN_RELEASE: "1"
+  GOLANG_VERSION: 1.20.5
 
 on:
   push:
@@ -23,7 +25,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  prepaire-source-code:
+  prepaire-source-code-ss-rust:
+    name: "Prepaire Source Code: shadowsocks-rust"
     runs-on: ubuntu-latest
     steps:
       - run: cat /etc/os-release
@@ -31,13 +34,13 @@ jobs:
         uses: actions/checkout@v3
       - name: Download source code archive
         run: |-
-          tarball_url="https://github.com/shadowsocks/${PKG_NAME}/archive/refs/tags/v${PKG_VERSION}.tar.gz"
-          tarball_path="${PKG_NAME}-${PKG_VERSION}.tar.gz"
+          tarball_url="https://github.com/shadowsocks/shadowsocks-rust/archive/refs/tags/v${SHADOWSOCKS_RUST_VERSION}.tar.gz"
+          tarball_path="shadowsocks-rust-${SHADOWSOCKS_RUST_VERSION}.tar.gz"
 
-          wget --no-verbose "$tarball_url" &&
-          tar -xf "v${PKG_VERSION}.tar.gz" &&
-          test -d "${PKG_NAME}-${PKG_VERSION}" &&
-          mv -v "${PKG_NAME}-${PKG_VERSION}" "${PKG_NAME}"
+          wget --no-verbose "$tarball_url"
+          tar -xf "v${SHADOWSOCKS_RUST_VERSION}.tar.gz"
+          test -d "shadowsocks-rust-${SHADOWSOCKS_RUST_VERSION}"
+          mv -v "shadowsocks-rust-${SHADOWSOCKS_RUST_VERSION}" shadowsocks-rust
       - name: Patching
         run: |-
           for fname in src/*.patch; do
@@ -51,9 +54,10 @@ jobs:
           path: shadowsocks-rust
           if-no-files-found: error
 
-  build-x86_64-gnu:
+  build-x86_64-gnu-ss-rust:
+    name: "Build x86_64 with GNU C: shadowsocks-rust"
     runs-on: ubuntu-latest
-    needs: prepaire-source-code
+    needs: prepaire-source-code-ss-rust
     steps:
       - name: Print version info for debugging
         run: |
@@ -76,7 +80,7 @@ jobs:
         run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
       # - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
       - name: Package output as .deb
-        run: cargo deb --target=x86_64-unknown-linux-gnu --deb-version="${PKG_VERSION}-${PKG_RELEASE}-xdeb" --output=./dist/
+        run: cargo deb --target=x86_64-unknown-linux-gnu --deb-version="${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb" --output=./dist/
       - name: TODO
         run: |
           pwd
@@ -95,9 +99,10 @@ jobs:
           path: dist
           if-no-files-found: error
 
-  build-i686-gnu:
+  build-i686-gnu-ss-rust:
+    name: "Build i686 with GNU C: shadowsocks-rust"
     runs-on: ubuntu-latest
-    needs: prepaire-source-code
+    needs: prepaire-source-code-ss-rust
     steps:
       - name: Print version info for debugging
         run: |
@@ -125,7 +130,7 @@ jobs:
         run: cargo build --target=i686-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
       # - run: cargo test --workspace --target=i686-unknown-linux-gnu --release
       - name: Package output as .deb
-        run: cargo deb --target=i686-unknown-linux-gnu --deb-version="${PKG_VERSION}-${PKG_RELEASE}-xdeb" --output=./dist/
+        run: cargo deb --target=i686-unknown-linux-gnu --deb-version="${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb" --output=./dist/
       - name: TODO
         run: |
           pwd
@@ -143,12 +148,49 @@ jobs:
           name: output-i686-gnu
           path: dist
           if-no-files-found: error
+  
+  build-v2ray-plugin:
+    name: "Build with GNU C: v2ray-plugin (both amd64 & 386)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Download Source Archive: v2ray-plugin"
+        run: |-
+          wget --no-verbose "https://github.com/shadowsocks/v2ray-plugin/archive/refs/tags/v${V2RAY_PLUGIN_VERSION}.tar.gz"
+          tar -xf "v${V2RAY_PLUGIN_VERSION}.tar.gz"
+          cd "v2ray-plugin-${V2RAY_PLUGIN_VERSION}"
+      - name: Test
+        run: |-
+          pwd
+
+          go fmt $(go list ./... | grep -v /vendor/) || echo "******** TEST FAILED ********"
+          go vet $(go list ./... | grep -v /vendor/) || echo "******** TEST FAILED ********"
+          go test -race $(go list ./... | grep -v /vendor/) || echo "******** TEST FAILED ********"
+      - name: Build
+        run: |-
+          pwd
+
+          ldflags="-s -w"
+          ldflags="$ldflags -X 'main.VERSION=v${PKG_VERSION} with v2ray/core $(grep v2ray-core go.mod | sed 's/^.*\s\(.*\)$/\1/'), built @ $(date -u +%FT%TZ)'"
+          ldflags="$ldflags -X v2ray.com/core.codename=V2Fly"
+          ldflags="$ldflags -X v2ray.com/core.build=$(date -u +%FT%TZ)"
+
+          GOARCH=amd64 go build -o "../dist/amd64/v2ray-plugin" -ldflags="$ldflags" -trimpath
+          GOARCH=386   go build -o "../dist/386/v2ray-plugin"   -ldflags="$ldflags" -trimpath
+      - name: Archive output
+        uses: actions/upload-artifact@v3
+        with:
+          name: output-v2ray-plugin
+          path: dist
+          if-no-files-found: error
+
+  # TODO: package v2ray-plugin .deb
 
   github-pages:
     runs-on: ubuntu-latest
     needs:
-      - build-x86_64-gnu
-      - build-i686-gnu
+      - build-x86_64-gnu-ss-rust
+      - build-i686-gnu-ss-rust
+      - build-v2ray-plugin
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -180,16 +222,16 @@ jobs:
       - run: ls -lAF
       - name: add .deb files into Debian repository
         run: |-
-          reprepro -b debian -C contrib includedeb buster   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-          reprepro -b debian -C contrib includedeb bullseye ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-          reprepro -b debian -C contrib includedeb bookworm ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b debian -C contrib includedeb buster   shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
+          reprepro -b debian -C contrib includedeb bullseye shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
+          reprepro -b debian -C contrib includedeb bookworm shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
           cp -v -r debian public/
       - name: add .deb files into Ubuntu repository
         run: |
-          reprepro -b ubuntu -C universe includedeb focal   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-          reprepro -b ubuntu -C universe includedeb jammy   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-          reprepro -b ubuntu -C universe includedeb kinetic ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
-          reprepro -b ubuntu -C universe includedeb lunar   ${PKG_NAME}_${PKG_VERSION}-${PKG_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb focal   shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb jammy   shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb kinetic shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
+          reprepro -b ubuntu -C universe includedeb lunar   shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
           cp -v -r ubuntu public/
       - name: Make `index.html`
         run: tree public -H '.' -T "$title" -I "reveal*|img*|style*|index*|content*|data" --noreport --charset utf-8 > public/index.html

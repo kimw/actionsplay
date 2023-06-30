@@ -256,13 +256,14 @@ jobs:
               -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.d/xdeb.gpg:ro \
               debian:${codename}
-            docker exec -t test-${codename} apt-get update
-            docker exec -t test-${codename} apt-get install -y shadowsocks-rust
-            docker exec -t test-${codename} sslocal --version
-            docker exec -t test-${codename} ssmanager --version
-            docker exec -t test-${codename} ssserver --version
-            docker exec -t test-${codename} ssservice --version
-            docker exec -t test-${codename} ssurl --version
+            ls -lAF /etc/apt /etc/apt/trusted.d /etc/apt/sources.list.d
+            docker exec test-${codename} apt-get update
+            docker exec test-${codename} apt-get install -y shadowsocks-rust
+            docker exec test-${codename} sslocal --version
+            docker exec test-${codename} ssmanager --version
+            docker exec test-${codename} ssserver --version
+            docker exec test-${codename} ssservice --version
+            docker exec test-${codename} ssurl --version
             docker rm -f test-${codename}
           done
       - name: Test to install .deb on Ubuntu OSes

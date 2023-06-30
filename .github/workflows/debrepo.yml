@@ -253,7 +253,7 @@ jobs:
           for codename in buster bullseye bookworm
           do
             docker run --name test-${codename} -d -t -e DEBIAN_FRONTEND=noninteractive \
-              -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.d/xdeb.list:ro \
+              -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.d/xdeb.gpg:ro \
               debian:${codename}
             docker exec -t test-${codename} apt-get update
@@ -270,7 +270,7 @@ jobs:
           for codename in focal jammy kinetic lunar
           do
             docker run --name test-${codename} -d -t -e DEBIAN_FRONTEND=noninteractive \
-              -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.d/xdeb.list:ro \
+              -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.d/xdeb.gpg:ro \
               ubuntu:${codename}
             docker exec -t test-${codename} apt-get update

@@ -239,6 +239,8 @@ jobs:
     needs: build-pages
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
       - name: Download artifact from build-pages
         uses: actions/download-artifact@v3
         with:

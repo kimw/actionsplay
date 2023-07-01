@@ -254,7 +254,7 @@ jobs:
       - run: docker exec -t test-deb-repo ls -lAF /usr/share/nginx/html
       - name: Test to install .deb on Debian OSes
         run: |-
-          for codename in buster bullseye bookworm
+          for codename in bookworm bullseye buster
           do
             docker run --name test-${codename} -d -t --net test \
               -e DEBIAN_FRONTEND=noninteractive \
@@ -273,7 +273,7 @@ jobs:
           done
       - name: Test to install .deb on Ubuntu OSes
         run: |-
-          for codename in focal jammy kinetic lunar
+          for codename in lunar kinetic jammy focal
           do
             docker run --name test-${codename} -d -t --net test \
               -e DEBIAN_FRONTEND=noninteractive \

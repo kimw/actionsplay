@@ -248,13 +248,14 @@ jobs:
           path: public
       - run: ls -lAFR
       - name: Set up deb repo container
-        run: docker run --name test-deb-repo -d -t -v $(pwd)/public:/usr/share/nginx/html:ro nginx:alpine
+        run: docker run --name test-deb-repo -d -t --net test -v $(pwd)/public:/usr/share/nginx/html:ro nginx:alpine
       - run: docker exec -t test-deb-repo ls -lAF /usr/share/nginx/html
       - name: Test to install .deb on Debian OSes
         run: |-
           for codename in buster bullseye bookworm
           do
-            docker run --name test-${codename} -d -t -e DEBIAN_FRONTEND=noninteractive \
+            docker run --name test-${codename} -d -t --net test \
+              -e DEBIAN_FRONTEND=noninteractive \
               -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.gpg.d/xdeb.gpg:ro \
               debian:${codename}
@@ -272,7 +273,8 @@ jobs:
         run: |-
           for codename in focal jammy kinetic lunar
           do
-            docker run --name test-${codename} -d -t -e DEBIAN_FRONTEND=noninteractive \
+            docker run --name test-${codename} -d -t --net test \
+              -e DEBIAN_FRONTEND=noninteractive \
               -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.gpg.d/xdeb.gpg:ro \
               ubuntu:${codename}

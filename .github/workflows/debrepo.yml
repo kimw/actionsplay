@@ -60,7 +60,7 @@ jobs:
     needs: prepare-source-code-ss-rust
     steps:
       - name: Print version info for debugging
-        run: |
+        run: |-
           cat /etc/os-release &&
           gcc --version &&
           rustup --version &&
@@ -71,16 +71,18 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
-      - run: pwd ; ls -lAF
+      - name: Install cross-rs
+        run: cargo install cross
+      - name: Build (by cross-rs) on x86_64 arch with GNU C library
+        # NOTE: docker is required by cross-rs. GitHub Actions' runner has installed docker already.
+        run: cross build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
+      # - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
       - name: Install cargo-deb tool
-        run: |
+        run: |-
           curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
           chmod 755 /usr/local/bin/cargo-deb
-      - name: Build on i686 arch with GNU C library
-        run: cargo build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
-      # - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
       - name: Package output as .deb
-        run: cargo deb --target=x86_64-unknown-linux-gnu --deb-version="${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb" --output=./dist/
+        run: cargo deb --no-build --target=x86_64-unknown-linux-gnu --deb-version="${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb" --output=./dist/ --verbose
       - name: Pick out binaries
         run: install -Dv -t ./dist/x86_64-gnu/
                ./target/x86_64-unknown-linux-gnu/release/sslocal
@@ -102,7 +104,7 @@ jobs:
     needs: prepare-source-code-ss-rust
     steps:
       - name: Print version info for debugging
-        run: |
+        run: |-
           cat /etc/os-release &&
           gcc --version &&
           rustup --version &&
@@ -113,21 +115,22 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
-      - run: pwd ; ls -lAF
+      #- name: Install cross compiling dependency
+      #  run: |-
+      #    sudo apt-get update
+      #    sudo apt-get install --yes gcc-multilib
+      #- run: rustup target add i686-unknown-linux-gnu
+      - name: Install cross-rs
+        run: cargo install cross
+      - name: Build (by cross-rs) on i686 arch with GNU C library
+        run: cross build --target=i686-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
+      # - run: cargo test --workspace --target=i686-unknown-linux-gnu --release
       - name: Install cargo-deb tool
-        run: |
+        run: |-
           curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
           chmod 755 /usr/local/bin/cargo-deb
-      - name: Install cross compiling dependency
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes gcc-multilib
-      - run: rustup target add i686-unknown-linux-gnu
-      - name: Build on i686 arch with GNU C library
-        run: cargo build --target=i686-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
-      # - run: cargo test --workspace --target=i686-unknown-linux-gnu --release
       - name: Package output as .deb
-        run: cargo deb --target=i686-unknown-linux-gnu --deb-version="${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb" --output=./dist/
+        run: cargo deb --no-build --target=i686-unknown-linux-gnu --deb-version="${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb" --output=./dist/
       - name: Pick out binaries
         run: install -Dv -t ./dist/i686-gnu/
                ./target/i686-unknown-linux-gnu/release/sslocal
@@ -219,7 +222,7 @@ jobs:
           reprepro -b debian -C contrib includedeb bookworm shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
           cp -v -r debian public/
       - name: add .deb files into Ubuntu repository
-        run: |
+        run: |-
           reprepro -b ubuntu -C universe includedeb focal   shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
           reprepro -b ubuntu -C universe includedeb jammy   shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
           reprepro -b ubuntu -C universe includedeb kinetic shadowsocks-rust_${SHADOWSOCKS_RUST_VERSION}-${SHADOWSOCKS_RUST_RELEASE}-xdeb_*.deb
@@ -261,7 +264,7 @@ jobs:
               -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.gpg.d/xdeb.gpg:ro \
               debian:${codename}
-            ls -lAF /etc/apt /etc/apt/trusted.gpg.d /etc/apt/sources.list.d
+            docker exec test-${codename} ls -lAF /etc/apt /etc/apt/trusted.gpg.d /etc/apt/sources.list.d
             docker exec test-${codename} apt-get update
             docker exec test-${codename} apt-get install -y shadowsocks-rust
             docker exec test-${codename} sslocal --version

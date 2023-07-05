@@ -294,7 +294,7 @@ jobs:
           done
       - name: Destroy deb repo container
         run: |-
-          docker rm -f test-dev-repo
+          docker rm -f test-deb-repo
           docker network rm test
 
   deploy-pages:

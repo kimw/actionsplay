@@ -76,7 +76,8 @@ jobs:
       - name: Build (by cross-rs) on x86_64 arch with GNU C library
         # NOTE: docker is required by cross-rs. GitHub Actions' runner has installed docker already.
         run: cross build --target=x86_64-unknown-linux-gnu --release --features="local-redir,local-dns,local-tun"
-      # - run: cargo test --workspace --target=x86_64-unknown-linux-gnu --release
+      - name: Test (by cross-rs) on x86_64 arch with GNU C library
+        run: cross test --workspace --target=x86_64-unknown-linux-gnu --release
       - name: Install cargo-deb tool
         run: |-
           curl -sL https://xdeb.gitlab.io/cargo-deb/cargo-deb_bullseye_amd64.gz | gzip -d > /usr/local/bin/cargo-deb
@@ -115,11 +116,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: prepaired-source-code
-      #- name: Install cross compiling dependency
-      #  run: |-
-      #    sudo apt-get update
-      #    sudo apt-get install --yes gcc-multilib
-      #- run: rustup target add i686-unknown-linux-gnu
       - name: Install cross-rs
         run: cargo install cross
       - name: Build (by cross-rs) on i686 arch with GNU C library
@@ -180,7 +176,7 @@ jobs:
   # TODO: package v2ray-plugin .deb
 
   build-pages:
-    name: Build & Deploy GitHub Pages
+    name: Build GitHub Pages
     runs-on: ubuntu-latest
     needs:
       - build-x86_64-gnu-ss-rust
@@ -201,14 +197,14 @@ jobs:
           name: output-i686-gnu
       - run: pwd ; ls -lAF
 
-      - run: |
+      - run: |-
           sudo apt-get update
           sudo apt-get install -y gpg reprepro tree
 
       - name: Import the sign key
         env:
           PRIVATE_SIGKEY: ${{ secrets.PRIVATE_SIGKEY }}
-        run: |
+        run: |-
           test -n "$PRIVATE_SIGKEY"  # ensure $PRIVATE_SIGKEY is not empty
           echo "${PRIVATE_SIGKEY}" | base64 -d | gpg --import
           gpg -K
@@ -249,7 +245,6 @@ jobs:
         with:
           name: output-build-pages
           path: public
-      - run: ls -lAFR
       - name: Set up deb repo container
         run: |-
           docker network create test
@@ -304,10 +299,10 @@ jobs:
       - test-pages
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout build-pages artifact
+      - name: Download artifact from build-pages
         uses: actions/download-artifact@v3
         with:
-          name: output-pages
+          name: output-build-pages
           path: public
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1

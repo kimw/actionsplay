@@ -256,7 +256,7 @@ jobs:
           do
             docker run --name test-${codename} -d -t --net test \
               -e DEBIAN_FRONTEND=noninteractive \
-              -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
+              -v $(pwd)/tests/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.gpg.d/xdeb.gpg:ro \
               debian:${codename}
             docker exec test-${codename} ls -lAF /etc/apt /etc/apt/trusted.gpg.d /etc/apt/sources.list.d
@@ -275,7 +275,7 @@ jobs:
           do
             docker run --name test-${codename} -d -t --net test \
               -e DEBIAN_FRONTEND=noninteractive \
-              -v $(pwd)/test/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
+              -v $(pwd)/tests/${codename}-sources.list:/etc/apt/sources.list.d/xdeb.list:ro \
               -v $(pwd)/pubkey.gpg:/etc/apt/trusted.gpg.d/xdeb.gpg:ro \
               ubuntu:${codename}
             docker exec -t test-${codename} apt-get update
